@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CharMapPlus (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "CharMapPlus (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

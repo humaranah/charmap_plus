@@ -41,21 +41,23 @@ public class FontService : IFontService
 
         var fontFace = font.CreateFontFace();
 
-        for (int codePoint = 0; codePoint <= 0xFFFF; codePoint++)
+        for (int codePoint = 0x0021; codePoint <= 0xFFFF; codePoint++)
         {
             if (codePoint >= 0xD800 && codePoint <= 0xDFFF)
                 continue; // Skip surrogate pairs
+
 
             var glyphIndices = new ushort[1];
             fontFace.GetGlyphIndices(new uint[] { (uint)codePoint }, glyphIndices);
             if (glyphIndices.Length > 0 && glyphIndices[0] != 0)
             {
                 var character = char.ConvertFromUtf32(codePoint);
+                var category = CharUnicodeInfo.GetUnicodeCategory(character, 0);
                 supportedChars.Add(new CharInfo(
                     Character: character,
                     Name: string.Empty,
                     CodePoint: codePoint,
-                    Category: CharUnicodeInfo.GetUnicodeCategory(character, 0),
+                    Category: category,
                     FontFamily: new System.Drawing.FontFamily(fontName)
                 ));
             }

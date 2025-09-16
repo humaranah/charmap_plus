@@ -1,4 +1,5 @@
-﻿using CharMapPlus.Models;
+﻿using CharMapPlus.Core;
+using CharMapPlus.Infrastructure;
 using CharMapPlus.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;

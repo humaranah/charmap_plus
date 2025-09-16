@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using CharMapPlus.Core.Models;
 
-namespace CharMapPlus.Models;
+namespace CharMapPlus.Core;
 
 /// <summary>
 /// Service for retrieving font information and characters.
@@ -22,7 +22,7 @@ public interface IFontService
     /// The name of the font to query.
     /// </param>
     /// <returns>
-    /// A collection of <see cref="CharInfo"/> representing the characters supported by the font.
+    /// A collection of <see cref="GlyphInfo"/> representing the characters supported by the font.
     /// </returns>
-    ICollection<CharInfo> GetFontSupportedCharacters(string fontName);
+    ICollection<GlyphInfo> GetFontSupportedCharacters(string fontName);
 }

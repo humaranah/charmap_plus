@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using CharMapPlus.Core;
+using CharMapPlus.Core.Models;
 using System.Drawing.Text;
 using System.Globalization;
-using System.Linq;
 using Vortice.DirectWrite;
 
-namespace CharMapPlus.Models;
+namespace CharMapPlus.Infrastructure;
 
 public class FontService : IFontService
 {
@@ -22,9 +22,9 @@ public class FontService : IFontService
         return [.. fontsCollection.Families.Select(f => string.Intern(f.Name))];
     }
 
-    public ICollection<CharInfo> GetFontSupportedCharacters(string fontName)
+    public ICollection<GlyphInfo> GetFontSupportedCharacters(string fontName)
     {
-        var supportedChars = new List<CharInfo>();
+        var supportedChars = new List<GlyphInfo>();
 
         if (_fontCollection is null)
             return supportedChars;
@@ -53,12 +53,12 @@ public class FontService : IFontService
             {
                 var character = char.ConvertFromUtf32(codePoint);
                 var category = CharUnicodeInfo.GetUnicodeCategory(character, 0);
-                supportedChars.Add(new CharInfo(
+                supportedChars.Add(new GlyphInfo(
                     Character: character,
                     Name: string.Empty,
                     CodePoint: codePoint,
                     Category: category,
-                    FontFamily: new System.Drawing.FontFamily(fontName)
+                    FontFamilyName: fontName
                 ));
             }
 

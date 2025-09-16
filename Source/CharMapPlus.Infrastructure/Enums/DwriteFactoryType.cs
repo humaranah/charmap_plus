@@ -1,4 +1,4 @@
-﻿namespace CharMapPlus.Enums;
+﻿namespace CharMapPlus.Infrastructure.Enums;
 
 public enum DWRITE_FACTORY_TYPE
 {

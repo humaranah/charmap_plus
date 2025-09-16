@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
@@ -37,13 +37,12 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4948" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250907003" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.9" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.9" />
     <PackageReference Include="System.Text.Encodings.Web" Version="9.0.9" />
-    <PackageReference Include="Vortice.Direct2D1" Version="3.6.2" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Helpers\" />
+    <ProjectReference Include="..\CharMapPlus.Core\CharMapPlus.Core.csproj" />
+    <ProjectReference Include="..\CharMapPlus.Infrastructure\CharMapPlus.Infrastructure.csproj" />
   </ItemGroup>
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution

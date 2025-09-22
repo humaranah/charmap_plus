@@ -4,8 +4,8 @@ namespace CharMapPlus.Core.Models;
 
 public record GlyphInfo(
     string Character,
-    string Name,
-    int CodePoint,
+    uint CodePoint,
+    int GlyphIndex,
     UnicodeCategory Category,
-    string FontFamilyName
+    string FontName
 );

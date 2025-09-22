@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace CharMapPlus.ViewModels;
@@ -42,7 +41,7 @@ public partial class CharMapViewModel : ObservableObject
 
     private void FillCharacters(string fontName)
     {
-        var characters = _fontService.GetFontSupportedCharacters(fontName);
+        var characters = _fontService.GetFontSupportedGlyphs(fontName);
         Characters = [.. characters
             .Select(c => new CharViewModel()
             {
@@ -63,7 +62,9 @@ public partial class CharMapViewModel : ObservableObject
 
     private void LoadFonts()
     {
-        Fonts = [.. _fontService.GetAllFonts()];
+        _fontService.LoadFonts();
+        var fonts = _fontService.ListFonts();
+        Fonts = [.. fonts.Select(f => f.Name)];
         if (Fonts.Count > 0)
             SelectedFont = Fonts[0];
     }

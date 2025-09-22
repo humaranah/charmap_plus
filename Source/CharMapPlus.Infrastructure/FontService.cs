@@ -1,68 +1,99 @@
 ﻿using CharMapPlus.Core;
 using CharMapPlus.Core.Models;
-using System.Drawing.Text;
+using CharMapPlus.Infrastructure.Abstractions;
+using CharMapPlus.Infrastructure.Models;
 using System.Globalization;
-using Vortice.DirectWrite;
 
 namespace CharMapPlus.Infrastructure;
 
-public class FontService : IFontService
+public class FontService(IFontCollectionProvider provider) : IFontService
 {
-    private readonly IDWriteFontCollection? _fontCollection;
+    // Unicode code points from U+0021 to U+D7FF and U+E000 to U+FFFF
+    // Excludes control characters and surrogate pairs
+    private static readonly uint[] CodePoints = [.. Enumerable
+        .Range(0x0021, 0xD800 - 0x0021 + 1)
+        .Concat(Enumerable.Range(0xE000, 0xFFFF - 0xE000 + 1))
+        .Select(codePoint => (uint)codePoint)];
 
-    public FontService()
+    private readonly Dictionary<string, FontMap> _fontMap = [];
+
+    public IReadOnlyDictionary<string, FontMap> FontMap => _fontMap;
+
+    public void LoadFonts()
     {
-        var factory = DWrite.DWriteCreateFactory<IDWriteFactory>();
-        _fontCollection = factory.GetSystemFontCollection(false);
+        _fontMap.Clear();
+        var families = provider.GetFontFamilies() ?? [];
+        if (families.Count == 0)
+            return;
+
+        foreach (var family in families)
+        {
+            var fonts = family.GetFonts();
+            if (!fonts.Any())
+                continue;
+
+            foreach (var font in fonts)
+            {
+                if (font.TryGetFullName(out string? fullName) && !_fontMap.ContainsKey(fullName))
+                {
+                    _fontMap[fullName] = new FontMap(family.Index, font.Index);
+                }
+            }
+        }
     }
 
-    public ICollection<string> GetAllFonts()
+    public ICollection<FontInfo> ListFonts()
     {
-        var fontsCollection = new InstalledFontCollection();
-        return [.. fontsCollection.Families.Select(f => string.Intern(f.Name))];
+        var fonts = new List<FontInfo>();
+        if (_fontMap.Count == 0)
+            return fonts;
+        foreach ((var key, var value) in _fontMap)
+        {
+            var fontFamily = provider.GetFontFamily(value.FontFamilyId);
+            fonts.Add(new FontInfo(
+                Name: key,
+                FamilyName: fontFamily.GetFamilyName()
+            ));
+        }
+        return [.. fonts.OrderBy(x => x.Name)];
     }
 
-    public ICollection<GlyphInfo> GetFontSupportedCharacters(string fontName)
+    public ICollection<GlyphInfo> GetFontSupportedGlyphs(string fontName)
     {
         var supportedChars = new List<GlyphInfo>();
-
-        if (_fontCollection is null)
+        if (_fontMap.Count == 0 || !_fontMap.TryGetValue(fontName, out FontMap? fontMap))
             return supportedChars;
 
-        if (!_fontCollection.FindFamilyName(fontName, out uint index))
-        {
-            // Need to infer the font family name and style from the provided name
-            return supportedChars;
-        }
-
-        var fontFamily = _fontCollection.GetFontFamily(index);
-        var font = fontFamily.GetFirstMatchingFont(
-            FontWeight.Normal, FontStretch.Normal, FontStyle.Normal);
-
+        var fontFamily = provider.GetFontFamily(fontMap.FontFamilyId);
+        var font = fontFamily.GetFont(fontMap.FontId);
         var fontFace = font.CreateFontFace();
 
-        for (int codePoint = 0x0021; codePoint <= 0xFFFF; codePoint++)
+        if (fontFace.GlyphCount == 0)
+            return supportedChars;
+
+        // Process code points in batches to optimize performance
+        const int batchSize = 512;
+        var batches = CodePoints.Chunk(batchSize);
+        foreach(var batch in batches)
         {
-            if (codePoint >= 0xD800 && codePoint <= 0xDFFF)
-                continue; // Skip surrogate pairs
-
-
-            var glyphIndices = new ushort[1];
-            fontFace.GetGlyphIndices(new uint[] { (uint)codePoint }, glyphIndices);
-            if (glyphIndices.Length > 0 && glyphIndices[0] != 0)
+            var glyphIndices = fontFace.GetGlyphIndices(batch);
+            for (int i = 0; i < batch.Length; i++)
             {
-                var character = char.ConvertFromUtf32(codePoint);
-                var category = CharUnicodeInfo.GetUnicodeCategory(character, 0);
-                supportedChars.Add(new GlyphInfo(
-                    Character: character,
-                    Name: string.Empty,
-                    CodePoint: codePoint,
-                    Category: category,
-                    FontFamilyName: fontName
-                ));
+                var codePoint = batch[i];
+                var glyphIndex = glyphIndices[i];
+                if (glyphIndex != 0)
+                {
+                    var character = char.ConvertFromUtf32((int)codePoint);
+                    supportedChars.Add(new GlyphInfo(
+                        character,
+                        codePoint,
+                        glyphIndex,
+                        CharUnicodeInfo.GetUnicodeCategory(character, 0),
+                        fontName));
+                }
             }
-
         }
-        return supportedChars;
+
+        return [.. supportedChars.OrderBy(g => g.CodePoint)];
     }
 }

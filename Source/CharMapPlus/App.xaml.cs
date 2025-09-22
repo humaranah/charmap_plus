@@ -1,5 +1,7 @@
 ﻿using CharMapPlus.Core;
 using CharMapPlus.Infrastructure;
+using CharMapPlus.Infrastructure.Abstractions;
+using CharMapPlus.Infrastructure.DirectWrite;
 using CharMapPlus.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -27,6 +29,8 @@ namespace CharMapPlus
         {
             InitializeComponent();
             Services = new ServiceCollection()
+                .AddSingleton<IDwFontFactoryWrapper, DwFontFactoryWrapper>()
+                .AddSingleton<IFontCollectionProvider, DWriteFontCollectionProvider>()
                 .AddSingleton<IFontService, FontService>()
                 .AddSingleton<CharMapViewModel>()
                 .BuildServiceProvider();
@@ -36,7 +40,7 @@ namespace CharMapPlus
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             _window = new MainWindow();
             _window.Activate();

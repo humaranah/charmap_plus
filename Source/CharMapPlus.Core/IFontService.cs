@@ -8,12 +8,17 @@ namespace CharMapPlus.Core;
 public interface IFontService
 {
     /// <summary>
+    /// 
+    /// </summary>
+    void LoadFonts();
+
+    /// <summary>
     /// Gets all installed font names.
     /// </summary>
     /// <returns>
     /// A collection of installed font names.
     /// </returns>
-    ICollection<string> GetAllFonts();
+    ICollection<FontInfo> ListFonts();
 
     /// <summary>
     /// Gets all characters supported by the specified font.
@@ -24,5 +29,5 @@ public interface IFontService
     /// <returns>
     /// A collection of <see cref="GlyphInfo"/> representing the characters supported by the font.
     /// </returns>
-    ICollection<GlyphInfo> GetFontSupportedCharacters(string fontName);
+    ICollection<GlyphInfo> GetFontSupportedGlyphs(string fontName);
 }

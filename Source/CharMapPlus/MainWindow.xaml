@@ -9,13 +9,36 @@
     xmlns:vm="using:CharMapPlus.ViewModels"
     xmlns:cv="using:CharMapPlus.Converters"
     mc:Ignorable="d"
-    Title="CharMapPlus">
+    Title="Character map">
 
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
     <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="WindowStates">
+                <VisualState x:Name="NarrowState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="FontsComboBox.Visibility" Value="Visible" />
+                        <Setter Target="FontsListView.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="800" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="FontsComboBox.Visibility" Value="Collapsed" />
+                        <Setter Target="FontsListView.Visibility" Value="Visible" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -27,15 +50,18 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ComboBox Grid.Column="1"
+        <ComboBox x:Name="FontsComboBox"
+                  Grid.Column="1"
                   MaxWidth="400"
                   Margin="12,6"
                   ItemsSource="{x:Bind ViewModel.Fonts, Mode=OneWay}"
                   SelectedItem="{x:Bind ViewModel.SelectedFont, Mode=TwoWay}"
+                  Visibility="Collapsed"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Center" />
 
-        <ScrollViewer Grid.RowSpan="3"
+        <ScrollViewer x:Name="FontsListView"
+                      Grid.RowSpan="3"
                       HorizontalScrollBarVisibility="Disabled">
 
             <ListView ItemsSource="{x:Bind ViewModel.Fonts, Mode=OneWay}"
@@ -48,7 +74,7 @@
                       Grid.Column="1"
                       BorderThickness="1,1,0,0"
                       BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                      Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+                      Background="{ThemeResource LayerOnMicaBaseAltFillColorDefault}"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
                       Padding="12">
@@ -69,6 +95,7 @@
                                 BorderThickness="1"
                                 Background="Transparent"
                                 BorderBrush="{x:Bind cv:SelectionBrushConverter.Convert(IsSelected), Mode=OneWay}"
+                                CornerRadius="4"
                                 Tapped="Border_Tapped">
                             <StackPanel Orientation="Vertical"
                                         HorizontalAlignment="Center">

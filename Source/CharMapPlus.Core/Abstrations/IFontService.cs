@@ -1,6 +1,6 @@
 ﻿using CharMapPlus.Core.Models;
 
-namespace CharMapPlus.Core;
+namespace CharMapPlus.Core.Abstrations;
 
 /// <summary>
 /// Service for retrieving font information and characters.

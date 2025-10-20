@@ -1,6 +1,5 @@
-﻿using CharMapPlus.Core;
+﻿using CharMapPlus.Core.Abstrations;
 using CharMapPlus.Infrastructure;
-using CharMapPlus.Infrastructure.Abstractions;
 using CharMapPlus.Infrastructure.DirectWrite;
 using CharMapPlus.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,8 +28,8 @@ namespace CharMapPlus
         {
             InitializeComponent();
             Services = new ServiceCollection()
-                .AddSingleton<IDwFontFactoryWrapper, DwFontFactoryWrapper>()
-                .AddSingleton<IFontCollectionProvider, DWriteFontCollectionProvider>()
+                .AddSingleton<IDWriteFontCollectionFactory, DWriteFontCollectionFactory>()
+                .AddSingleton<IFontCollectionProvider, DwFontCollectionProvider>()
                 .AddSingleton<IFontService, FontService>()
                 .AddSingleton<CharMapViewModel>()
                 .BuildServiceProvider();

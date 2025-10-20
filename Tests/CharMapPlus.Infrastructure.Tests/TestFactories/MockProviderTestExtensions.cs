@@ -1,5 +1,4 @@
-﻿using CharMapPlus.Infrastructure.Abstractions;
-using CharMapPlus.Infrastructure.DirectWrite;
+﻿using CharMapPlus.Core.Abstrations;
 using Moq;
 
 namespace CharMapPlus.Infrastructure.Tests.TestFactories;
@@ -32,12 +31,12 @@ public static class MockProviderTestExtensions
         if (count == 0)
             return;
 
-        var fontFamilies = new IDwFontFamilyWrapper[count];
+        var fontFamilies = new IFontFamily[count];
         for (uint i = 0; i < count; i++)
         {
             (var name, var fonts) = families[i];
             var mockFamily = FontMockFactory.CreateFontFamily(name, fonts);
-            mockFamily.SetupGet(f => f.Index).Returns(i);
+            mockFamily.SetupGet(f => f.Id).Returns(i);
             mockProvider.Setup(p => p.GetFontFamily(i)).Returns(mockFamily.Object);
             fontFamilies[i] = mockFamily.Object;
         }

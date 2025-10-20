@@ -1,4 +1,4 @@
-﻿using CharMapPlus.Core;
+﻿using CharMapPlus.Core.Abstrations;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.Generic;

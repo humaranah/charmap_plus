@@ -1,11 +1,12 @@
-﻿using CharMapPlus.Core.Models;
-using CharMapPlus.Infrastructure.Abstractions;
+﻿using CharMapPlus.Core.Abstrations;
+using CharMapPlus.Core.Models;
 using CharMapPlus.Infrastructure.Tests.TestFactories;
 using Moq;
 using System.Globalization;
 
 namespace CharMapPlus.Infrastructure.Tests;
 
+[Trait("Category", "Unit")]
 public class FontServiceTests
 {
     private readonly Mock<IFontCollectionProvider> _mockProvider = new();

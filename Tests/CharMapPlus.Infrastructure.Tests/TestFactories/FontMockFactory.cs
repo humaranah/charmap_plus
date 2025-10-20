@@ -1,15 +1,16 @@
-﻿using CharMapPlus.Infrastructure.DirectWrite;
+﻿using CharMapPlus.Core.Abstrations;
+using CharMapPlus.Core.Models;
 using Moq;
+using System.Globalization;
 
 namespace CharMapPlus.Infrastructure.Tests.TestFactories;
 
 public static class FontMockFactory
 {
-    public static Mock<IDwFontFamilyWrapper> CreateFontFamily(string name, (string? Name, ushort[] Glyphs)[] fonts)
+    public static Mock<IFontFamily> CreateFontFamily(string name, (string? Name, ushort[] Glyphs)[] fonts)
     {
-        var familyMock = new Mock<IDwFontFamilyWrapper>();
+        var familyMock = new Mock<IFontFamily>();
         familyMock.Setup(f => f.GetFamilyName()).Returns(name);
-        familyMock.SetupGet(f => f.FontCount).Returns((uint)fonts.Length);
 
         var fontsByFamily = CreateFontsByFamily(familyMock, fonts);
         familyMock.Setup(f => f.GetFonts()).Returns(fontsByFamily);
@@ -17,14 +18,14 @@ public static class FontMockFactory
         return familyMock;
     }
 
-    private static IDwFontWrapper[] CreateFontsByFamily(
-        Mock<IDwFontFamilyWrapper> familyMock, (string? Name, ushort[] Glyphs)[] fonts)
+    private static IFont[] CreateFontsByFamily(
+        Mock<IFontFamily> familyMock, (string? Name, ushort[] Glyphs)[] fonts)
     {
         var count = fonts.Length;
         if (count == 0)
             return [];
 
-        var results = new IDwFontWrapper[count];
+        var results = new IFont[count];
         for (uint fontIndex = 0; fontIndex < count; fontIndex++)
         {
             var font = fonts[fontIndex];
@@ -35,43 +36,36 @@ public static class FontMockFactory
                 (_, var glyphs) => CreateFont(fontIndex, fontName!, glyphs)
             };
 
-            familyMock.Setup(f => f.GetFont(fontIndex)).Returns(fontMock.Object);
+            familyMock.Setup(f => f.TryGetFont(fontIndex, out It.Ref<IFont?>.IsAny))
+                .Returns((uint _, out IFont? f) => { f = fontMock.Object; return true; });
             results[fontIndex] = fontMock.Object;
         }
 
         return results;
     }
 
-    private static Mock<IDwFontWrapper> CreateFont(uint index, string fontName, ushort[] glyphs)
+    private static Mock<IFont> CreateFont(uint index, string fontName, ushort[] glyphs)
     {
         var mockFont = CreateFont(index, fontName, true);
-        var mockFontFace = new Mock<IDwFontFaceWrapper>();
 
-        mockFont.Setup(f => f.CreateFontFace()).Returns(mockFontFace.Object);
-        mockFontFace.SetupGet(ff => ff.GlyphCount).Returns((ushort)glyphs.Length);
-
-        if (glyphs.Length == 0)
-            return mockFont;
-
-        mockFontFace.Setup(ff => ff.GetGlyphIndices(It.IsAny<uint[]>()))
-            .Returns((uint[] codePoints) =>
+        mockFont.Setup(f => f.GetSupportedGlyphs())
+            .Returns(() =>
             {
-                var result = new ushort[codePoints.Length];
-                for (int i = 0; i < codePoints.Length; i++)
+                var result = new List<GlyphInfo>();
+                foreach (var glyph in glyphs)
                 {
-                    var glyph = (ushort)codePoints[i];
-                    result[i] = glyphs.Contains(glyph) ? glyph : (ushort)0;
+                    var @char = char.ConvertFromUtf32(glyph);
+                    result.Add(new GlyphInfo(@char, glyph, glyph, UnicodeCategory.UppercaseLetter, fontName));
                 }
                 return result;
             });
-
         return mockFont;
     }
 
-    private static Mock<IDwFontWrapper> CreateFont(uint index, string? fontName, bool exists)
+    private static Mock<IFont> CreateFont(uint index, string? fontName, bool exists)
     {
-        var mockFont = new Mock<IDwFontWrapper>();
-        mockFont.SetupGet(f => f.Index).Returns(index);
+        var mockFont = new Mock<IFont>();
+        mockFont.SetupGet(f => f.Id).Returns(index);
         mockFont.Setup(f => f.TryGetFullName(out It.Ref<string?>.IsAny))
             .Returns((out string? name) =>
             {

@@ -1,4 +1,4 @@
-﻿namespace CharMapPlus.Infrastructure.Models;
+﻿namespace CharMapPlus.Core.Models;
 
 public record FontMap(
     uint FontFamilyId,

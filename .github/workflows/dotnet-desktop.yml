@@ -23,7 +23,7 @@ jobs:
         run: dotnet restore CharMapPlus.sln
 
       - name: Build
-        run: dotnet build CharMapPlus.sln --configuration Release --no-restore
+        run: dotnet build CharMapPlus.sln --configuration Release --no-restore -p:PublishReadyToRun=false
 
       - name: Test
         run: |

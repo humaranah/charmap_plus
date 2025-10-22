@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Restore NuGet packages
+      run: |
+        dotnet restore CharMapPlus.sln
+        
+    - name: Build solution
+      run: |
+        msbuild CharMapPlus.sln /p:Configuration=Release /p:Platform="Any CPU"
+        
+    - name: Run Unit Tests
+      run: |
+        dotnet test Tests/CharMapPlus.Infrastructure.Tests/CharMapPlus.Infrastructure.Tests.csproj --configuration Release --logger "trx;LogFileName=unit-tests.trx" --collect:"XPlat Code Coverage"
+        
+    - name: Run Integration Tests
+      run: |
+        dotnet test Tests/CharMapPlus.Infrastructure.IntegrationTests/CharMapPlus.Infrastructure.IntegrationTests.csproj --configuration Release --logger "trx;LogFileName=integration-tests.trx" --collect:"XPlat Code Coverage"
+        
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: "**/*.trx"
+        reporter: dotnet-trx
+        
+    - name: Upload Code Coverage
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        file: "**/coverage.cobertura.xml"
+        fail_ci_if_error: false
+        
+    - name: Build for Release (if main branch)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        msbuild Source/CharMapPlus/CharMapPlus.csproj /p:Configuration=Release /p:Platform=x64 /p:PublishProfile=win10-x64

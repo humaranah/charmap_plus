@@ -43,13 +43,12 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Publish Test Results
-        uses: dorny/test-reporter@v1
+        uses: EnricoMi/publish-unit-test-result-action/windows@v2
         if: always()
         with:
-          name: Test Results
-          path: "./TestResults/**/*.trx"
-          reporter: dotnet-trx
-          fail-on-error: false
+          files: "./TestResults/**/*.trx"
+          check_name: "Test Results"
+          comment_title: "Test Results"
 
       - name: Upload Test Results (Alternative)
         uses: actions/upload-artifact@v4

@@ -57,10 +57,29 @@ jobs:
           name: test-results
           path: ./TestResults
 
-      - name: Code Coverage Summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: |
+          reportgenerator `
+            -reports:"./TestResults/**/coverage.cobertura.xml" `
+            -targetdir:"./TestResults/CoverageReport" `
+            -reporttypes:"Html;MarkdownSummaryGithub;JsonSummary" `
+            -verbosity:Info
+
+      - name: Display Coverage Summary
+        run: |
+          if (Test-Path "./TestResults/CoverageReport/SummaryGithub.md") {
+            echo "## 📊 Code Coverage Summary"
+            Get-Content "./TestResults/CoverageReport/SummaryGithub.md"
+          } else {
+            echo "⚠️ No coverage report generated"
+          }
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          filename: "./TestResults/**/coverage.cobertura.xml"
-          badge: true
-          format: markdown
-          output: both
+          name: coverage-report
+          path: ./TestResults/CoverageReport

@@ -53,7 +53,7 @@ public class DwFont(uint id, IDWriteFont font) : IFont
         return true;
     }
 
-    private bool TryCreateGlyph(uint codePoint, ushort index, [NotNullWhen(true)] out GlyphInfo? info)
+    private static bool TryCreateGlyph(uint codePoint, ushort index, [NotNullWhen(true)] out GlyphInfo? info)
     {
         if (index == 0)
         {
@@ -65,8 +65,7 @@ public class DwFont(uint id, IDWriteFont font) : IFont
             character,
             codePoint,
             index,
-            CharUnicodeInfo.GetUnicodeCategory(character, 0),
-            TryGetFullName(out var name) ? name : "Unknown");
+            CharUnicodeInfo.GetUnicodeCategory(character, 0));
         return true;
     }
 }

@@ -133,7 +133,7 @@ public class FontServiceTests
         var expected = glyphs.Select(g =>
         {
             var character = char.ConvertFromUtf32(g);
-            return new GlyphInfo(character, g, g, UnicodeCategory.UppercaseLetter, TestFontName);
+            return new GlyphInfo(character, g, g, UnicodeCategory.UppercaseLetter);
         }).ToArray();
         _mockProvider.SetupFontFamilies([
             (TestFontFamily, [

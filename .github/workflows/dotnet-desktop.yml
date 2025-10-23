@@ -1,0 +1,96 @@
+name: .NET Desktop
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore CharMapPlus.sln
+
+      - name: Build
+        run: dotnet build CharMapPlus.sln --configuration Release --no-restore -p:PublishReadyToRun=false
+
+      - name: Run Unit Tests
+        run: |
+          dotnet test Tests/CharMapPlus.Infrastructure.Tests/CharMapPlus.Infrastructure.Tests.csproj `
+            --configuration Release `
+            --no-build `
+            --verbosity normal `
+            --logger "trx;LogFileName=unit-tests.trx" `
+            --collect:"XPlat Code Coverage" `
+            --results-directory ./TestResults/Unit `
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Run Integration Tests
+        run: |
+          dotnet test Tests/CharMapPlus.Infrastructure.IntegrationTests/CharMapPlus.Infrastructure.IntegrationTests.csproj `
+            --configuration Release `
+            --no-build `
+            --verbosity normal `
+            --logger "trx;LogFileName=integration-tests.trx" `
+            --collect:"XPlat Code Coverage" `
+            --results-directory ./TestResults/Integration `
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action/windows@v2
+        if: always()
+        with:
+          files: "./TestResults/**/*.trx"
+          check_name: "Test Results"
+          comment_title: "Test Results"
+
+      - name: Upload Test Results (Alternative)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./TestResults
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: |
+          reportgenerator `
+            -reports:"./TestResults/**/coverage.cobertura.xml" `
+            -targetdir:"./TestResults/CoverageReport" `
+            -reporttypes:"Html;MarkdownSummaryGithub;JsonSummary" `
+            -verbosity:Info
+
+      - name: Display Coverage Summary
+        run: |
+          if (Test-Path "./TestResults/CoverageReport/SummaryGithub.md") {
+            echo "## 📊 Code Coverage Summary"
+            Get-Content "./TestResults/CoverageReport/SummaryGithub.md"
+          } else {
+            echo "⚠️ No coverage report generated"
+          }
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ./TestResults/CoverageReport

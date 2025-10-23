@@ -31,15 +31,26 @@ jobs:
       - name: Build
         run: dotnet build CharMapPlus.sln --configuration Release --no-restore -p:PublishReadyToRun=false
 
-      - name: Test
+      - name: Run Unit Tests
         run: |
-          dotnet test CharMapPlus.sln `
+          dotnet test Tests/CharMapPlus.Infrastructure.Tests/CharMapPlus.Infrastructure.Tests.csproj `
             --configuration Release `
             --no-build `
             --verbosity normal `
-            --logger "trx;LogFileName=test-results.trx" `
+            --logger "trx;LogFileName=unit-tests.trx" `
             --collect:"XPlat Code Coverage" `
-            --results-directory ./TestResults `
+            --results-directory ./TestResults/Unit `
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Run Integration Tests
+        run: |
+          dotnet test Tests/CharMapPlus.Infrastructure.IntegrationTests/CharMapPlus.Infrastructure.IntegrationTests.csproj `
+            --configuration Release `
+            --no-build `
+            --verbosity normal `
+            --logger "trx;LogFileName=integration-tests.trx" `
+            --collect:"XPlat Code Coverage" `
+            --results-directory ./TestResults/Integration `
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Publish Test Results

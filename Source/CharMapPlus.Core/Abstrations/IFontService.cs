@@ -10,7 +10,7 @@ public interface IFontService
     /// <summary>
     /// 
     /// </summary>
-    void LoadFonts();
+    Task LoadFontsAsync();
 
     /// <summary>
     /// Gets all installed font names.

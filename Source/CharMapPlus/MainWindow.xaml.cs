@@ -33,6 +33,8 @@ public sealed partial class MainWindow : Window
             var appWindow = AppWindow.GetFromWindowId(windowId);
 
             appWindow.SetIcon(@"Assets\Icon.ico");
+
+            _ = ViewModel.LoadFontsCommand.ExecuteAsync(null);
         }
     }
 

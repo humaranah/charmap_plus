@@ -1,6 +1,7 @@
 ﻿using CharMapPlus.Core.Abstrations;
 using CharMapPlus.Infrastructure;
 using CharMapPlus.Infrastructure.DirectWrite;
+using CharMapPlus.Services;
 using CharMapPlus.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -31,6 +32,7 @@ namespace CharMapPlus
                 .AddSingleton<IDWriteFontCollectionFactory, DWriteFontCollectionFactory>()
                 .AddSingleton<IFontCollectionProvider, DwFontCollectionProvider>()
                 .AddSingleton<IFontService, FontService>()
+                .AddSingleton<IClipboardService, WinUiClipboardService>()
                 .AddSingleton<CharMapViewModel>()
                 .BuildServiceProvider();
         }

@@ -8,19 +8,22 @@ public class FontService(IFontCollectionProvider provider) : IFontService
     private readonly Dictionary<string, FontMap> _fontMap = [];
     public IReadOnlyDictionary<string, FontMap> FontMap => _fontMap;
 
-    public void LoadFonts()
+    public Task LoadFontsAsync()
     {
-        _fontMap.Clear();
-        foreach (var family in provider.GetFontFamilies())
+        return Task.Run(() =>
         {
-            foreach (var font in family.GetFonts())
+            _fontMap.Clear();
+            foreach (var family in provider.GetFontFamilies())
             {
-                if (font.TryGetFullName(out string? fullName) && !_fontMap.ContainsKey(fullName))
+                foreach (var font in family.GetFonts())
                 {
-                    _fontMap[fullName] = new FontMap(family.Id, font.Id);
+                    if (font.TryGetFullName(out string? fullName) && !_fontMap.ContainsKey(fullName))
+                    {
+                        _fontMap[fullName] = new FontMap(family.Id, font.Id);
+                    }
                 }
             }
-        }
+        });
     }
 
     public ICollection<FontInfo> ListFonts()

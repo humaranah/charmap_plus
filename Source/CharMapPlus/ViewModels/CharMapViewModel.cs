@@ -3,17 +3,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CharMapPlus.ViewModels;
 
 public partial class CharMapViewModel : ObservableObject
 {
     private readonly IFontService _fontService;
+    private readonly IClipboardService _clipboardService;
 
-    public CharMapViewModel(IFontService fontService)
+    public CharMapViewModel(
+        IFontService fontService,
+        IClipboardService clipboardService)
     {
         _fontService = fontService;
-        LoadFonts();
+        _clipboardService = clipboardService;
     }
 
     [ObservableProperty]
@@ -21,6 +25,9 @@ public partial class CharMapViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _selectedFont;
+
+    [ObservableProperty]
+    private bool _isLoading = false;
 
     partial void OnSelectedFontChanged(string? value)
     {
@@ -60,12 +67,30 @@ public partial class CharMapViewModel : ObservableObject
         }
     }
 
-    private void LoadFonts()
+    [RelayCommand]
+    private void CopySelectedText()
     {
-        _fontService.LoadFonts();
-        var fonts = _fontService.ListFonts();
-        Fonts = [.. fonts.Select(f => f.Name)];
-        if (Fonts.Count > 0)
-            SelectedFont = Fonts[0];
+        if (!string.IsNullOrEmpty(SelectionText))
+        {
+            _clipboardService.SetText(SelectionText);
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadFonts()
+    {
+        IsLoading = true;
+        try
+        {
+            await _fontService.LoadFontsAsync();
+            var fonts = _fontService.ListFonts();
+            Fonts = [.. fonts.Select(f => f.Name)];
+            if (Fonts.Count > 0)
+                SelectedFont = Fonts[0];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

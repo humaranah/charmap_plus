@@ -39,11 +39,13 @@ public sealed partial class MainWindow : Window
 
             _logger.LogInformation("MainWindow initialized successfully");
         }
+#pragma warning disable S2139 // Exceptions should be either logged or rethrown but not both
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Failed to initialize MainWindow");
             throw;
         }
+#pragma warning restore S2139 // Exceptions should be either logged or rethrown but not both
     }
 
     private void ConfigureWindow()

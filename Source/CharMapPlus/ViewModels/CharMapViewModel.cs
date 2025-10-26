@@ -18,6 +18,7 @@ public sealed partial class CharMapViewModel(
     private CancellationTokenSource? _loadCharactersCts;
 
     [ObservableProperty]
+#pragma warning disable MVVMTK0045 // Using [ObservableProperty] on fields is not AOT compatible for WinRT
     private List<string> _fonts = [];
 
     [ObservableProperty]
@@ -56,6 +57,7 @@ public sealed partial class CharMapViewModel(
 
     [ObservableProperty]
     private string _selectionText = string.Empty;
+#pragma warning restore MVVMTK0045 // Using [ObservableProperty] on fields is not AOT compatible for WinRT
 
     public void Dispose()
     {

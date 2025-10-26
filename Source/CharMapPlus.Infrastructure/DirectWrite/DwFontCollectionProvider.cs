@@ -3,7 +3,8 @@ using Vortice.DirectWrite;
 
 namespace CharMapPlus.Infrastructure.DirectWrite;
 
-public class DwFontCollectionProvider(IDWriteFontCollectionFactory factory) : IFontCollectionProvider
+public class DwFontCollectionProvider(
+    IDWriteFontCollectionFactory factory) : IFontCollectionProvider
 {
     private readonly Lazy<IDWriteFontCollection> _fontCollection = new(factory.Create);
 

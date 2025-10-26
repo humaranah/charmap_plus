@@ -80,7 +80,7 @@
                       Padding="12">
 
             <ItemsRepeater x:Name="GlyphItemsRepeater"
-                           ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}">
+                           ItemsSource="{x:Bind ViewModel.Glyphs, Mode=OneWay}">
                 <ItemsRepeater.Layout>
                     <UniformGridLayout MinColumnSpacing="8"
                                        MinRowSpacing="8"

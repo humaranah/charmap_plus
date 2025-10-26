@@ -1,6 +1,7 @@
 ﻿using CharMapPlus.Core.Abstrations;
 using CharMapPlus.Core.Models;
 using CharMapPlus.Infrastructure.Tests.TestFactories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Globalization;
 
@@ -10,6 +11,7 @@ namespace CharMapPlus.Infrastructure.Tests;
 public class FontServiceTests
 {
     private readonly Mock<IFontCollectionProvider> _mockProvider = new();
+    private readonly NullLogger<FontService> _logger = new();
     private readonly FontService _fontService;
 
     private const string TestFontFamily = "Test Family";
@@ -17,7 +19,7 @@ public class FontServiceTests
 
     public FontServiceTests()
     {
-        _fontService = new(_mockProvider.Object);
+        _fontService = new(_mockProvider.Object, _logger);
     }
 
     #region LoadFonts Tests

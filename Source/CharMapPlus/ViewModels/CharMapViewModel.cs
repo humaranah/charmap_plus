@@ -32,10 +32,14 @@ public sealed partial class CharMapViewModel(
     partial void OnFontsChanged(List<FontViewModel>? oldValue, List<FontViewModel> newValue)
     {
         foreach (var font in oldValue ?? [])
+        {
             font.PropertyChanged -= Font_PropertyChanged;
+        }
 
         foreach (var font in newValue ?? [])
+        {
             font.PropertyChanged += Font_PropertyChanged;
+        }
     }
 
     [ObservableProperty]
@@ -57,10 +61,14 @@ public sealed partial class CharMapViewModel(
     partial void OnGlyphsChanged(List<CharViewModel>? oldValue, List<CharViewModel> newValue)
     {
         foreach (var glyph in oldValue ?? [])
+        {
             glyph.PropertyChanged -= Glyph_PropertyChanged;
+        }
 
         foreach (var glyph in newValue ?? [])
+        {
             glyph.PropertyChanged += Glyph_PropertyChanged;
+        }
     }
 
     public CharViewModel? SelectedGlyph => Glyphs.FirstOrDefault(g => g.IsSelected);
@@ -71,10 +79,14 @@ public sealed partial class CharMapViewModel(
     public void Dispose()
     {
         foreach (var font in Fonts ?? [])
+        {
             font.PropertyChanged -= Font_PropertyChanged;
+        }
 
         foreach (var glyph in Glyphs ?? [])
+        {
             glyph.PropertyChanged -= Glyph_PropertyChanged;
+        }
 
         _loadCharactersCts?.Cancel();
         _loadCharactersCts?.Dispose();

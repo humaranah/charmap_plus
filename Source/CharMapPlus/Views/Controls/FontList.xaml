@@ -22,7 +22,8 @@
                           ToolTipService.Placement="Mouse"
                           Tag="{x:Bind FontName}"
                           IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
-                          Unchecked="ToggleButton_Unchecked"/>
+                          Unchecked="ToggleButton_Unchecked"
+                          GotFocus="ToggleButton_GotFocus" />
         </DataTemplate>
     </UserControl.Resources>
 
@@ -41,16 +42,20 @@
                      Mode=OneWay}"
                  Text="{x:Bind ViewModel.FontSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-        <ScrollViewer x:Name="FontsListView"
+        <ScrollViewer x:Name="FontsScrollViewer"
                       Grid.Row="1"
                       Visibility="{x:Bind
                           cv:VisibilityConverter.ToInvertedVisibility(ViewModel.IsLoadingFonts),
                           Mode=OneWay}"
                       HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
+                      VerticalScrollBarVisibility="Auto"
+                      IsTabStop="True"
+                      TabNavigation="Local"
+                      GettingFocus="FontsScrollViewer_GettingFocus">
 
-            <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredFonts, Mode=OneWay}"
-                          ItemTemplate="{StaticResource FontItemTemplate}">
+            <ItemsRepeater x:Name="FontsRepeater"
+                           ItemsSource="{x:Bind ViewModel.FilteredFonts, Mode=OneWay}"
+                           ItemTemplate="{StaticResource FontItemTemplate}">
                 <ItemsRepeater.Layout>
                     <StackLayout Spacing="2" />
                 </ItemsRepeater.Layout>

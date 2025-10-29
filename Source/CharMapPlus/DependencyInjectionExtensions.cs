@@ -18,7 +18,7 @@ public static class DependencyInjectionExtensions
             .AddSingleton<IFontCollectionProvider, DwFontCollectionProvider>()
             .AddSingleton<IFontService, FontService>()
             .AddSingleton<IClipboardService, WinUiClipboardService>()
-            .AddTransient<CharMapViewModel>()
+            .AddSingleton<CharMapViewModel>()
             .AddTransient<MainWindow>();
     }
 }

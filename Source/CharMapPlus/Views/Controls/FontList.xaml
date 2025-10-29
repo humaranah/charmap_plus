@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="CharMapPlus.Views.Controls.FontList"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CharMapPlus.Views.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:CharMapPlus.ViewModels"
+    xmlns:cv="using:CharMapPlus.Converters"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="FontItemTemplate" x:DataType="vm:FontViewModel">
+            <ToggleButton Background="Transparent"
+                          BorderThickness="0"
+                          HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Left"
+                          Margin="6,0"
+                          Content="{x:Bind FontName}"
+                          ToolTipService.ToolTip="{x:Bind FontName}"
+                          ToolTipService.Placement="Mouse"
+                          Tag="{x:Bind FontName}"
+                          IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                          Unchecked="ToggleButton_Unchecked"/>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Width="240">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBox x:Name="FontFilterTextBox"
+                 Grid.Row="0"
+                 Margin="6"
+                 PlaceholderText="Filter fonts..."
+                 Visibility="{x:Bind
+                     cv:VisibilityConverter.ToInvertedVisibility(ViewModel.IsLoadingFonts),
+                     Mode=OneWay}"
+                 Text="{x:Bind ViewModel.FontSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <ScrollViewer x:Name="FontsListView"
+                      Grid.Row="1"
+                      Visibility="{x:Bind
+                          cv:VisibilityConverter.ToInvertedVisibility(ViewModel.IsLoadingFonts),
+                          Mode=OneWay}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+
+            <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredFonts, Mode=OneWay}"
+                          ItemTemplate="{StaticResource FontItemTemplate}">
+                <ItemsRepeater.Layout>
+                    <StackLayout Spacing="2" />
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
+
+        </ScrollViewer>
+
+        <ProgressRing x:Name="LoadingProgressRing"
+                      Grid.RowSpan="2"
+                      Width="50"
+                      Height="50"
+                      Visibility="{x:Bind
+                          cv:VisibilityConverter.ToVisibility(ViewModel.IsLoadingFonts), Mode=OneWay}"
+                      IsActive="{x:Bind ViewModel.IsLoadingFonts, Mode=OneWay}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"/>
+    </Grid>
+</UserControl>

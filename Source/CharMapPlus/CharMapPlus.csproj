@@ -13,6 +13,10 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Views\Controls\FontList.xaml" />
+	  <None Remove="Views\Controls\GlyphExplorer.xaml" />
+	</ItemGroup>
+	<ItemGroup>
 		<Content Include="Assets\Icon.ico" />
 		<Content Include="Assets\SplashScreen.scale-200.png" />
 		<Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -48,6 +52,16 @@
 	<ItemGroup>
 		<ProjectReference Include="..\CharMapPlus.Core\CharMapPlus.Core.csproj" />
 		<ProjectReference Include="..\CharMapPlus.Infrastructure\CharMapPlus.Infrastructure.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\Controls\FontList.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\Controls\GlyphExplorer.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 	<!--
 		Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution

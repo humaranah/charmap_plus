@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:CharMapPlus.ViewModels"
     xmlns:cv="using:CharMapPlus.Converters"
+    xmlns:ctl="using:CharMapPlus.Views.Controls"
     mc:Ignorable="d"
     Title="Character map">
 
@@ -15,7 +16,18 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup x:Name="WindowStates">
                 <VisualState x:Name="NarrowState">
@@ -38,19 +50,8 @@
                 </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
-        
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <ComboBox x:Name="FontsComboBox"
+        <!--<ComboBox x:Name="FontsComboBox"
                   Grid.Column="1"
                   MaxWidth="400"
                   Margin="12,6"
@@ -58,65 +59,16 @@
                   SelectedItem="{x:Bind ViewModel.SelectedFont, Mode=TwoWay}"
                   Visibility="Collapsed"
                   HorizontalAlignment="Stretch"
-                  VerticalAlignment="Center" />
+                  VerticalAlignment="Center" />-->
 
-        <ScrollViewer x:Name="FontsListView"
+        <ctl:FontList x:Name="FontListControl"
                       Grid.RowSpan="3"
-                      HorizontalScrollBarVisibility="Disabled">
+                      Margin="0" />
 
-            <ListView ItemsSource="{x:Bind ViewModel.Fonts, Mode=OneWay}"
-                      SelectedItem="{x:Bind ViewModel.SelectedFont, Mode=TwoWay}" />
-
-        </ScrollViewer>
-
-        <ScrollViewer x:Name="GlyphScrollViewer"
-                      Grid.Row="1"
-                      Grid.Column="1"
-                      BorderThickness="1,1,0,0"
-                      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                      Background="{ThemeResource LayerOnMicaBaseAltFillColorDefault}"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled"
-                      Padding="12">
-
-            <ItemsRepeater x:Name="GlyphItemsRepeater"
-                           ItemsSource="{x:Bind ViewModel.Glyphs, Mode=OneWay}">
-                <ItemsRepeater.Layout>
-                    <UniformGridLayout MinColumnSpacing="8"
-                                       MinRowSpacing="8"
-                                       ItemsJustification="Start"
-                                       Orientation="Horizontal" />
-                </ItemsRepeater.Layout>
-
-                <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="vm:CharViewModel">
-                        <Border Width="72"
-                                Tag="{x:Bind}"
-                                BorderThickness="1"
-                                Background="Transparent"
-                                BorderBrush="{x:Bind cv:SelectionBrushConverter.Convert(IsSelected), Mode=OneWay}"
-                                CornerRadius="4"
-                                Tapped="Border_Tapped">
-                            <StackPanel Orientation="Vertical"
-                                        HorizontalAlignment="Center">
-                                <TextBlock Text="{x:Bind Character}"
-                                           FontFamily="{x:Bind cv:FontFamilyConverter.ConvertFrom(FontName)}"
-                                           FontSize="40"
-                                           LineHeight="40"
-                                           Padding="0,15,0,0"
-                                           LineStackingStrategy="BlockLineHeight"
-                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="{x:Bind Utf8Code}"
-                                           FontSize="12"
-                                           Padding="0,5"
-                                           HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsRepeater.ItemTemplate>
-            </ItemsRepeater>
-
-        </ScrollViewer>
+        <ctl:GlyphExplorer x:Name="GlyphExplorerControl"
+                          Grid.Column="1"
+                          Grid.Row="1"
+                          Margin="0" />
 
         <Border Padding="15"
                 Grid.Column="1"

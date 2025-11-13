@@ -1,3 +1,4 @@
+using CharMapPlus.Util;
 using CharMapPlus.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -12,6 +13,8 @@ namespace CharMapPlus.Views.Controls;
 
 public sealed partial class FontList : UserControl
 {
+    private readonly Debouncer _selectionDebouncer = new(300);
+
     public CharMapViewModel ViewModel { get; }
 
     public FontList()
@@ -51,9 +54,15 @@ public sealed partial class FontList : UserControl
 
     private void ToggleButton_GotFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is ToggleButton toggleButton)
+        if (sender is not ToggleButton toggleButton)
+            return;
+        _ = _selectionDebouncer.ExecuteAsync(() =>
         {
-            toggleButton.IsChecked = true;
-        }
+            if (FocusManager.GetFocusedElement(XamlRoot) is ToggleButton focused &&
+                focused == toggleButton)
+            {
+                toggleButton.IsChecked = true;
+            }
+        });
     }
 }

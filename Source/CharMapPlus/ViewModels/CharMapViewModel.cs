@@ -1,4 +1,5 @@
 ﻿using CharMapPlus.Core.Abstrations;
+using CharMapPlus.Util;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -17,8 +18,8 @@ public sealed partial class CharMapViewModel(
     IClipboardService clipboardService,
     ILogger<CharMapViewModel> logger) : ObservableObject, IDisposable
 {
+    private readonly Debouncer _filterDebouncer = new(300);
     private CancellationTokenSource? _loadCharactersCts;
-    private CancellationTokenSource? _filterFontsCts;
 
     [ObservableProperty]
     private bool _isLoadingFonts = false;
@@ -47,7 +48,7 @@ public sealed partial class CharMapViewModel(
 
     async partial void OnFontSearchTextChanged(string value)
     {
-        await FilterFontsAsync(value);
+        await _filterDebouncer.ExecuteAsync(() => FilterFontsAsync(value));
     }
 
     [ObservableProperty]
@@ -90,8 +91,7 @@ public sealed partial class CharMapViewModel(
 
         _loadCharactersCts?.Cancel();
         _loadCharactersCts?.Dispose();
-        _filterFontsCts?.Cancel();
-        _filterFontsCts?.Dispose();
+        _filterDebouncer.Dispose();
         logger.LogDebug("CharMapViewModel disposed");
     }
 
@@ -230,19 +230,8 @@ public sealed partial class CharMapViewModel(
 
     private async Task FilterFontsAsync(string searchText)
     {
-        if (_filterFontsCts != null)
-        {
-            await _filterFontsCts.CancelAsync();
-            _filterFontsCts.Dispose();
-        }
-        _filterFontsCts = new CancellationTokenSource();
-
-        var token = _filterFontsCts.Token;
-
         try
         {
-            await Task.Delay(150, token);
-
             var filtered = await Task.Run(() =>
             {
                 if (string.IsNullOrWhiteSpace(searchText))
@@ -256,18 +245,10 @@ public sealed partial class CharMapViewModel(
                         Fonts.Where(f => f.FontName.Contains(lowerSearch, StringComparison.InvariantCultureIgnoreCase))
                     ];
                 }
-            }, token);
-
-            if (!token.IsCancellationRequested)
-            {
-                FilteredFonts = filtered;
-                logger.LogDebug("Filtered fonts with search text '{SearchText}': {FilteredCount} items",
-                    searchText, FilteredFonts.Count);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Filtering was canceled
+            });
+            FilteredFonts = filtered;
+            logger.LogDebug("Filtered fonts with search text '{SearchText}': {FilteredCount} items",
+                searchText, FilteredFonts.Count);
         }
         catch (Exception ex)
         {

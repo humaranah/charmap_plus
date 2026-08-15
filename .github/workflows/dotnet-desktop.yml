@@ -37,10 +37,9 @@ jobs:
             --configuration Release `
             --no-build `
             --verbosity normal `
-            --logger "trx;LogFileName=unit-tests.trx" `
-            --collect:"XPlat Code Coverage" `
             --results-directory ./TestResults/Unit `
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+            --report-trx --report-trx-filename unit-tests.trx `
+            --coverlet --coverlet-output-format cobertura
 
       - name: Run Integration Tests
         run: |
@@ -48,10 +47,9 @@ jobs:
             --configuration Release `
             --no-build `
             --verbosity normal `
-            --logger "trx;LogFileName=integration-tests.trx" `
-            --collect:"XPlat Code Coverage" `
             --results-directory ./TestResults/Integration `
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+            --report-trx --report-trx-filename integration-tests.trx `
+            --coverlet --coverlet-output-format cobertura
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action/windows@v2
@@ -74,7 +72,7 @@ jobs:
       - name: Generate Coverage Report
         run: |
           reportgenerator `
-            -reports:"./TestResults/**/coverage.cobertura.xml" `
+            -reports:"./TestResults/**/coverage.cobertura*.xml" `
             -targetdir:"./TestResults/CoverageReport" `
             -reporttypes:"Html;MarkdownSummaryGithub;JsonSummary" `
             -verbosity:Info

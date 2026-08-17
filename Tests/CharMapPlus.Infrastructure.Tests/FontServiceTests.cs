@@ -1,6 +1,7 @@
 ﻿using CharMapPlus.Core.Abstrations;
 using CharMapPlus.Core.Models;
 using CharMapPlus.Infrastructure.Tests.TestFactories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Globalization;
 
@@ -10,6 +11,7 @@ namespace CharMapPlus.Infrastructure.Tests;
 public class FontServiceTests
 {
     private readonly Mock<IFontCollectionProvider> _mockProvider = new();
+    private readonly NullLogger<FontService> _logger = new();
     private readonly FontService _fontService;
 
     private const string TestFontFamily = "Test Family";
@@ -17,26 +19,26 @@ public class FontServiceTests
 
     public FontServiceTests()
     {
-        _fontService = new(_mockProvider.Object);
+        _fontService = new(_mockProvider.Object, _logger);
     }
 
     #region LoadFonts Tests
     [Fact]
-    public void LoadFonts_ShouldInitializeFontMap()
+    public async Task LoadFontsAsync_ShouldInitializeFontMap()
     {
         // Arrange
         _mockProvider.SetupFontFamilies([
             (TestFontFamily, [TestFontName])
         ]);
         // Act
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Assert
         Assert.Single(_fontService.FontMap);
         Assert.True(_fontService.FontMap.ContainsKey(TestFontName));
     }
 
     [Fact]
-    public void LoadFonts_ShouldNotAddDuplicateFontNames()
+    public async Task LoadFontsAsync_ShouldNotAddDuplicateFontNames()
     {
         // Arrange
         _mockProvider.SetupFontFamilies([
@@ -44,14 +46,14 @@ public class FontServiceTests
             (TestFontFamily, [TestFontName])
         ]);
         // Act
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Assert
         Assert.Single(_fontService.FontMap);
         Assert.True(_fontService.FontMap.ContainsKey(TestFontName));
     }
 
     [Fact]
-    public void LoadFonts_ShouldSkipNonExistingFontNames()
+    public async Task LoadFontsAsync_ShouldSkipNonExistingFontNames()
     {
         // Arrange
         _mockProvider.SetupFontFamilies([
@@ -59,7 +61,7 @@ public class FontServiceTests
             ("Another Family", [])
         ]);
         // Act
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Assert
         Assert.Single(_fontService.FontMap);
         Assert.True(_fontService.FontMap.ContainsKey(TestFontName));
@@ -68,11 +70,11 @@ public class FontServiceTests
 
     #region ListFonts Tests
     [Fact]
-    public void ListFonts_ShouldReturnEmptyCollection_WhenFontMapIsEmpty()
+    public async Task ListFonts_ShouldReturnEmptyCollection_WhenFontMapIsEmpty()
     {
         // Arrange
         _mockProvider.Setup(p => p.GetFontFamilies()).Returns([]);
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Act
         var results = _fontService.ListFonts();
         // Assert
@@ -80,14 +82,14 @@ public class FontServiceTests
     }
 
     [Fact]
-    public void ListFonts_ShouldReturnFontsCollection()
+    public async Task ListFonts_ShouldReturnFontsCollection()
     {
         // Arrange
         _mockProvider.SetupFontFamilies([
             ("Arial", ["Arial", "Arial Black"]),
             ("Times New Roman", ["Times New Roman"])
         ]);
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Act
         var results = _fontService.ListFonts();
         // Assert
@@ -100,11 +102,11 @@ public class FontServiceTests
 
     #region GetFontSupportedCharacters Tests
     [Fact]
-    public void GetFontSupportedGlyphs_ShouldReturnEmptyArray_WhenFontNotFound()
+    public async Task GetFontSupportedGlyphs_ShouldReturnEmptyArray_WhenFontNotFound()
     {
         // Arrange
         _mockProvider.Setup(p => p.GetFontFamilies()).Returns([]);
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Act
         var result = _fontService.GetFontSupportedGlyphs("NonExistentFont");
         // Assert
@@ -112,13 +114,13 @@ public class FontServiceTests
     }
 
     [Fact]
-    public void GetFontSupportedGlyphs_ShouldReturnEmptyArray_WhenFontHasNoGlyphs()
+    public async Task GetFontSupportedGlyphs_ShouldReturnEmptyArray_WhenFontHasNoGlyphs()
     {
         // Arrange
         _mockProvider.SetupFontFamilies([
             (TestFontFamily, [TestFontName])
         ]);
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Act
         var result = _fontService.GetFontSupportedGlyphs(TestFontName);
         // Assert
@@ -126,21 +128,21 @@ public class FontServiceTests
     }
 
     [Fact]
-    public void GetFontSupportedGlyphs_ShouldReturnSupportedCharacters()
+    public async Task GetFontSupportedGlyphs_ShouldReturnSupportedCharacters()
     {
         // Arrange
         ushort[] glyphs = [0x0041, 0x0042, 0x0043]; // A, B, C
         var expected = glyphs.Select(g =>
         {
             var character = char.ConvertFromUtf32(g);
-            return new GlyphInfo(character, g, g, UnicodeCategory.UppercaseLetter, TestFontName);
+            return new GlyphInfo(character, g, g, UnicodeCategory.UppercaseLetter);
         }).ToArray();
         _mockProvider.SetupFontFamilies([
             (TestFontFamily, [
                 (TestFontName, glyphs)
             ])
         ]);
-        _fontService.LoadFonts();
+        await _fontService.LoadFontsAsync();
         // Act
         var result = _fontService.GetFontSupportedGlyphs(TestFontName);
         // Assert

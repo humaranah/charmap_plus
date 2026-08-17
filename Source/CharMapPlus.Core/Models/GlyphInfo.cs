@@ -6,6 +6,5 @@ public record GlyphInfo(
     string Character,
     uint CodePoint,
     int GlyphIndex,
-    UnicodeCategory Category,
-    string FontName
+    UnicodeCategory Category
 );

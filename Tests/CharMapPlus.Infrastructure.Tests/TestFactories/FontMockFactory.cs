@@ -55,7 +55,7 @@ public static class FontMockFactory
                 foreach (var glyph in glyphs)
                 {
                     var @char = char.ConvertFromUtf32(glyph);
-                    result.Add(new GlyphInfo(@char, glyph, glyph, UnicodeCategory.UppercaseLetter, fontName));
+                    result.Add(new GlyphInfo(@char, glyph, glyph, UnicodeCategory.UppercaseLetter));
                 }
                 return result;
             });

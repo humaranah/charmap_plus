@@ -1,71 +1,259 @@
 ﻿using CharMapPlus.Core.Abstrations;
+using CharMapPlus.Util;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CharMapPlus.ViewModels;
 
-public partial class CharMapViewModel : ObservableObject
+#pragma warning disable MVVMTK0045 // Using [ObservableProperty] on fields is not AOT compatible for WinRT
+public sealed partial class CharMapViewModel(
+    IFontService fontService,
+    IClipboardService clipboardService,
+    ILogger<CharMapViewModel> logger) : ObservableObject, IDisposable
 {
-    private readonly IFontService _fontService;
-
-    public CharMapViewModel(IFontService fontService)
-    {
-        _fontService = fontService;
-        LoadFonts();
-    }
+    private readonly Debouncer _filterDebouncer = new(300);
+    private CancellationTokenSource? _loadCharactersCts;
 
     [ObservableProperty]
-    private List<string> _fonts = [];
+    private bool _isLoadingFonts = false;
 
     [ObservableProperty]
-    private string? _selectedFont;
+    private bool _isLoadingGlyphs = false;
 
-    partial void OnSelectedFontChanged(string? value)
+    [ObservableProperty]
+    private List<FontViewModel> _fonts = [];
+
+    partial void OnFontsChanged(List<FontViewModel>? oldValue, List<FontViewModel> newValue)
     {
-        if (value is not null)
+        foreach (var font in oldValue ?? [])
         {
-            FillCharacters(value);
+            font.PropertyChanged -= Font_PropertyChanged;
+        }
+
+        foreach (var font in newValue ?? [])
+        {
+            font.PropertyChanged += Font_PropertyChanged;
         }
     }
 
     [ObservableProperty]
-    private List<CharViewModel> _characters = [];
+    private string _fontSearchText = string.Empty;
+
+    async partial void OnFontSearchTextChanged(string value)
+    {
+        await _filterDebouncer.ExecuteAsync(() => FilterFontsAsync(value));
+    }
 
     [ObservableProperty]
-    private CharViewModel? _selectedCharacter;
+    private List<FontViewModel> _filteredFonts = [];
+
+    public FontViewModel? SelectedFont => Fonts.FirstOrDefault(f => f.IsSelected);
+
+    [ObservableProperty]
+    private List<CharViewModel> _glyphs = [];
+
+    partial void OnGlyphsChanged(List<CharViewModel>? oldValue, List<CharViewModel> newValue)
+    {
+        foreach (var glyph in oldValue ?? [])
+        {
+            glyph.PropertyChanged -= Glyph_PropertyChanged;
+        }
+
+        foreach (var glyph in newValue ?? [])
+        {
+            glyph.PropertyChanged += Glyph_PropertyChanged;
+        }
+    }
+
+    public CharViewModel? SelectedGlyph => Glyphs.FirstOrDefault(g => g.IsSelected);
 
     [ObservableProperty]
     private string _selectionText = string.Empty;
 
-    private void FillCharacters(string fontName)
+    public void Dispose()
     {
-        var characters = _fontService.GetFontSupportedGlyphs(fontName);
-        Characters = [.. characters
-            .Select(c => new CharViewModel()
-            {
-                Character = c.Character,
-                Utf8Code = $"U+{c.CodePoint:X4}",
-                FontName = fontName
-            })];
+        foreach (var font in Fonts ?? [])
+        {
+            font.PropertyChanged -= Font_PropertyChanged;
+        }
+
+        foreach (var glyph in Glyphs ?? [])
+        {
+            glyph.PropertyChanged -= Glyph_PropertyChanged;
+        }
+
+        _loadCharactersCts?.Cancel();
+        _loadCharactersCts?.Dispose();
+        _filterDebouncer.Dispose();
+        logger.LogDebug("CharMapViewModel disposed");
     }
 
     [RelayCommand]
     private void CopySelection()
     {
-        if (SelectedCharacter is not null)
+        if (SelectedGlyph is not null)
         {
-            SelectionText += SelectedCharacter.Character;
+            SelectionText += SelectedGlyph.Character;
         }
     }
 
-    private void LoadFonts()
+    [RelayCommand]
+    private void CopySelectedText()
     {
-        _fontService.LoadFonts();
-        var fonts = _fontService.ListFonts();
-        Fonts = [.. fonts.Select(f => f.Name)];
-        if (Fonts.Count > 0)
-            SelectedFont = Fonts[0];
+        if (!string.IsNullOrEmpty(SelectionText))
+        {
+            clipboardService.SetText(SelectionText);
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadFonts()
+    {
+        IsLoadingFonts = true;
+        try
+        {
+            await fontService.LoadFontsAsync();
+            var fonts = fontService.ListFonts();
+            Fonts = [.. fonts
+                .Select(font => new FontViewModel { FontName = font.Name })
+                .OrderBy(vm => vm.FontName)];
+
+            FilteredFonts = Fonts;
+            if (FilteredFonts.Count > 0)
+            {
+                FilteredFonts[0].IsSelected = true;
+                await LoadGlyphsAsync(FilteredFonts[0].FontName);
+            }
+        }
+        finally
+        {
+            IsLoadingFonts = false;
+        }
+    }
+
+    private void Font_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not FontViewModel font)
+            return;
+        if (e.PropertyName == nameof(FontViewModel.IsSelected))
+        {
+            if (font.IsSelected)
+            {
+                // Deseleccionar otras fuentes
+                foreach (var otherFont in Fonts.Where(f => f != font && f.IsSelected))
+                {
+                    otherFont.IsSelected = false;
+                }
+
+                logger.LogDebug("Font '{FontName}' selected", font.FontName);
+                _ = LoadGlyphsAsync(font.FontName);
+            }
+            OnPropertyChanged(nameof(SelectedFont));
+        }
+    }
+
+    private void Glyph_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not CharViewModel glyph)
+            return;
+        if (e.PropertyName == nameof(CharViewModel.IsSelected))
+        {
+            if (glyph.IsSelected)
+            {
+                // Deseleccionar otros glifos
+                foreach (var otherGlyph in Glyphs.Where(g => g != glyph && g.IsSelected))
+                {
+                    otherGlyph.IsSelected = false;
+                }
+                logger.LogDebug("Character '{Character}' selected", glyph.Character);
+            }
+            OnPropertyChanged(nameof(SelectedGlyph));
+        }
+    }
+
+    private async Task LoadGlyphsAsync(string fontName)
+    {
+        if (_loadCharactersCts != null)
+        {
+            await _loadCharactersCts.CancelAsync();
+            _loadCharactersCts.Dispose();
+        }
+        _loadCharactersCts = new CancellationTokenSource();
+
+        var token = _loadCharactersCts.Token;
+
+        IsLoadingGlyphs = true;
+        try
+        {
+            logger.LogDebug("Loading characters for font '{FontName}'", fontName);
+            var characters = await Task.Run(() =>
+            {
+                var glyphs = fontService.GetFontSupportedGlyphs(fontName);
+                return glyphs
+                    .Select(c => new CharViewModel()
+                    {
+                        Character = c.Character,
+                        Utf8Code = $"U+{c.CodePoint:X4}",
+                        FontName = fontName
+                    })
+                    .ToList();
+            }, token);
+            if (!token.IsCancellationRequested)
+            {
+                Glyphs = characters;
+                logger.LogInformation("Loaded {CharacterCount} characters for font '{FontName}'",
+                    Glyphs.Count, fontName);
+                Glyphs[0].IsSelected = true;
+            }
+        }
+        catch (OperationCanceledException ex)
+        {
+            logger.LogDebug(ex, "Loading characters for font '{FontName}' was canceled", fontName);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error loading characters for font '{FontName}'", fontName);
+            Glyphs = [];
+        }
+        finally
+        {
+            IsLoadingGlyphs = false;
+        }
+    }
+
+    private async Task FilterFontsAsync(string searchText)
+    {
+        try
+        {
+            var filtered = await Task.Run(() =>
+            {
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    return Fonts;
+                }
+                else
+                {
+                    var lowerSearch = searchText.ToLowerInvariant();
+                    return [..
+                        Fonts.Where(f => f.FontName.Contains(lowerSearch, StringComparison.InvariantCultureIgnoreCase))
+                    ];
+                }
+            });
+            FilteredFonts = filtered;
+            logger.LogDebug("Filtered fonts with search text '{SearchText}': {FilteredCount} items",
+                searchText, FilteredFonts.Count);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error filtering fonts with search text '{SearchText}'", searchText);
+            FilteredFonts = Fonts;
+        }
     }
 }

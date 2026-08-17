@@ -1,59 +1,81 @@
 using CharMapPlus.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using System.ComponentModel;
+using System;
 using WinRT.Interop;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace CharMapPlus;
 
 /// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
+/// Main application window.
 /// </summary>
 public sealed partial class MainWindow : Window
 {
+    private readonly ILogger<MainWindow> _logger;
+
     public CharMapViewModel ViewModel { get; }
 
-    public MainWindow()
+    public MainWindow(CharMapViewModel viewModel, ILogger<MainWindow> logger)
     {
-        ViewModel = App.Services.GetRequiredService<CharMapViewModel>();
-        InitializeComponent();
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        _logger = logger;
+        ViewModel = viewModel;
 
-        if (AppWindowTitleBar.IsCustomizationSupported())
+        try
         {
+            _logger.LogInformation("Initializing MainWindow");
+
+            InitializeComponent();
+
+            ConfigureWindow();
+
+            _logger.LogInformation("MainWindow initialized successfully");
+        }
+#pragma warning disable S2139 // Exceptions should be either logged or rethrown but not both
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "Failed to initialize MainWindow");
+            throw;
+        }
+#pragma warning restore S2139 // Exceptions should be either logged or rethrown but not both
+    }
+
+    private void ConfigureWindow()
+    {
+        if (!AppWindowTitleBar.IsCustomizationSupported())
+        {
+            _logger.LogWarning("AppWindowTitleBar customization not supported");
+            return;
+        }
+
+        try
+        {
+            _logger.LogDebug("Configuring window");
+
             var hwnd = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
             var appWindow = AppWindow.GetFromWindowId(windowId);
 
-            appWindow.SetIcon(@"Assets\Icon.ico");
+            ConfigureAppWindow(appWindow);
+
+            _logger.LogDebug("Window configured successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to configure window");
         }
     }
 
-    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private static void ConfigureAppWindow(AppWindow appWindow)
     {
-        if (e.PropertyName == nameof(ViewModel.Characters) && ViewModel.Characters.Count > 0)
-        {
-            GlyphScrollViewer.ChangeView(0, 0, null);
-        }
-    }
+        appWindow.SetIcon(@"Assets\Icon.ico");
 
-    private void Border_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (sender is Border border && border.Tag is CharViewModel viewModel)
+        var presenter = appWindow.Presenter as OverlappedPresenter;
+        if (presenter is not null)
         {
-            foreach (var item in ViewModel.Characters)
-            {
-                item.IsSelected = false;
-            }
-            viewModel.IsSelected = true;
-            ViewModel.SelectedCharacter = viewModel;
+            presenter.IsMinimizable = true;
+            presenter.IsMaximizable = true;
         }
     }
 }
